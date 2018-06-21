@@ -9,7 +9,12 @@ parser.add_argument('--model', type=str, required=True,
                     help='path to model')
 args = parser.parse_args()
 
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.Session(config=config)
 import keras
+keras.backend.set_session(session)
 from keras.models import *
 from skimage.io import imread, imsave
 from skimage.color import gray2rgb

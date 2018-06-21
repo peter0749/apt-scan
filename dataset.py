@@ -6,6 +6,8 @@ from io import BytesIO
 import numpy as np
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
+import imgaug as ia
+from imgaug import augmenters as iaa
 from tqdm import tqdm
 from keras.utils import Sequence
 import cv2
@@ -24,6 +26,50 @@ class APTDataset(Sequence):
         self.output_shape = output_shape
         self.batch_size = batch_size
         self.json_files = glob.glob(prefix+'/**/*.json', recursive=True)
+        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+
+        # Define our sequence of augmentation steps that will be applied to every image
+        # All augmenters with per_channel=0.5 will sample one value _per image_
+        # in 50% of all cases. In all other cases they will sample new values
+        # _per channel_.
+        self.seq = iaa.Sequential(
+            [
+                # execute 0 to 3 of the following (less important) augmenters per image
+                # don't execute all of them, as that would often be way too strong
+                iaa.SomeOf((0, 3),
+                    [
+                        iaa.OneOf([
+                            iaa.GaussianBlur((0, 1.0)), # blur images with a sigma between 0 and 3.0
+                            iaa.AverageBlur(k=(3, 5)), # blur image using local means with kernel sizes between 2 and 7
+                            iaa.MedianBlur(k=(3, 5)), # blur image using local medians with kernel sizes between 2 and 7
+                        ]),
+                        iaa.Sharpen(alpha=(0, 1.0), lightness=(0.75, 1.5)), # sharpen images
+                        iaa.Emboss(alpha=(0, 0.3), strength=(0, 2.0)), # emboss images
+                        # search either for all edges or for directed edges,
+                        # blend the result with the original image using a blobby mask
+                        iaa.SimplexNoiseAlpha(iaa.OneOf([
+                            iaa.EdgeDetect(alpha=(0.5, 1.0)),
+                            iaa.DirectedEdgeDetect(alpha=(0.5, 1.0), direction=(0.0, 1.0)),
+                        ])),
+                        iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5), # add gaussian noise to images
+                        iaa.OneOf([
+                            iaa.Dropout((0.01, 0.1), per_channel=0.5), # randomly remove up to 10% of the pixels
+                            iaa.CoarseDropout((0.03, 0.15), size_percent=(0.02, 0.05), per_channel=0.2),
+                        ]),
+                        iaa.Invert(0.05, per_channel=True), # invert color channels
+                        iaa.Add((-10, 10), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
+                        iaa.AddToHueAndSaturation((-20, 20)), # change hue and saturation
+                        # either change the brightness of the whole image (sometimes
+                        # per channel) or change the brightness of subareas
+                        iaa.Multiply((0.8, 1.2), per_channel=0.5),
+                        iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5), # improve or worsen the contrast
+                        iaa.Grayscale(alpha=(0.0, 1.0))
+                    ],
+                    random_order=True
+                )
+            ],
+            random_order=True
+        )
     def __len__(self):
         return int(np.ceil(float(len(self.json_files))/self.batch_size))
 
@@ -46,7 +92,35 @@ class APTDataset(Sequence):
             srcW, srcH = img.size
             dstW, dstH = self.output_shape[:2]
             img = np.array(img, dtype=np.uint8)
-            img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
+            img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first... 
+            
+            if self.is_training:
+                if np.random.rand() < 0.1: # heavy augmentation (slow)
+                    img = self.seq.augment_image(img) # data augmentation
+                else: # light augmentation (fast)
+                    img = img.astype(np.float32) / 255.0 # normalize first
+                    # random amplify each channel
+                    a = .1 # amptitude
+                    t  = [np.random.uniform(-a,a)]
+                    t += [np.random.uniform(-a,a)]
+                    t += [np.random.uniform(-a,a)]
+                    t = np.array(t)
+
+                    img = np.clip(img * (1. + t), 0, 1) # channel wise amplify
+                    up = np.random.uniform(0.95, 1.05) # change gamma
+                    img = np.clip(img**up, 0, 1) # apply gamma and convert back to range [0,255]    
+                    
+                    # additive random noise
+                    sigma = np.random.rand()*0.04
+                    img = np.clip(img + np.random.randn(*img.shape)*sigma, 0, 1)
+                    
+                    img = np.round(np.clip(img*255, 0, 255)).astype(np.uint8)
+                                        
+                    if np.random.binomial(1, .05):
+                        ksize = np.random.choice([3,5,7])
+                        img = cv2.GaussianBlur(img, (ksize,ksize), 0)
+            
+            img = img.astype(np.float32) / 255.0 # normalize
 
             # Sort the corners by clockwise
             # while the first corner is the most top-lefted
@@ -72,9 +146,10 @@ class APTDataset(Sequence):
                     img = rotate(img, angle, resize=True)
                     lab = rotate(lab, angle, resize=True)
                     if img.shape != self.input_shape:
-                        img = resize(img, self.input_shape[:2],  mode='constant', cval=0, clip=True, preserve_range=True)
-                        lab = resize(lab, self.output_shape[:2], mode='constant', cval=0, clip=True, preserve_range=True)
-                
+                        od = np.random.randint(2) # 0 / 1
+                        img = resize(img, self.input_shape[:2],  mode='constant', cval=0, clip=True, preserve_range=True, order=od)
+                        lab = resize(lab, self.output_shape[:2], mode='constant', cval=0, clip=True, preserve_range=True, order=od)
+                '''
                 # random amplify each channel
                 a = .1 # amptitude
                 t  = [np.random.uniform(-a,a)]
@@ -85,6 +160,7 @@ class APTDataset(Sequence):
                 img = np.clip(img * (1. + t), 0, 1) # channel wise amplify
                 up = np.random.uniform(0.95, 1.05) # change gamma
                 img = np.clip(img**up, 0, 1) # apply gamma and convert back to range [0,255]
+                '''
             dat_que[n] = img
             lab_que[n] = lab
         return dat_que, (lab_que>.5).astype(np.uint8)

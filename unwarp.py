@@ -55,14 +55,14 @@ def unwarp(image, pts): # format: (y,x)
     # x-coordiates or the top-right and top-left x-coordinates
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
     widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-    maxWidth = max(int(widthA), int(widthB))
+    aveWidth  = int((widthA+widthB)//2) # max(int(widthA), int(widthB))
 
     # compute the height of the new image, which will be the
     # maximum distance between the top-right and bottom-right
     # y-coordinates or the top-left and bottom-left y-coordinates
     heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
     heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    maxHeight = max(int(heightA), int(heightB))
+    aveHeight = int((heightA+heightB)//2) # max(int(heightA), int(heightB))
 
     # now that we have the dimensions of the new image, construct
     # the set of destination points to obtain a "birds eye view",
@@ -71,16 +71,16 @@ def unwarp(image, pts): # format: (y,x)
     # order
     dst = np.array([
         [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1]], dtype = "float32")
+        [aveWidth - 1, 0],
+        [aveWidth - 1, aveHeight - 1],
+        [0, aveHeight - 1]], dtype = "float32")
 
     # compute the perspective transform matrix and then apply it
     M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+    warped = cv2.warpPerspective(image, M, (aveWidth, aveHeight))
     
     # M = cv2.getAffineTransform(rect[:3], dst[:3])
-    # warped = cv2.warpAffine(image, M, (maxWidth, maxHeight))
+    # warped = cv2.warpAffine(image, M, (aveWidth, aveHeight))
 
     # return the warped image
     return warped
