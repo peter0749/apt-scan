@@ -41,7 +41,6 @@ from model import mean_iou, bce_dice_coef, model
 from dataset import APTDataset
 from callbacks import Preview
 from keras.callbacks import ModelCheckpoint, TensorBoard
-# from weightnorm import AdamWithWeightnorm as Adam
 from keras.optimizers import Adam
 from focal_loss import focal_loss
 
