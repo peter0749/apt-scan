@@ -1,5 +1,6 @@
 import postprocess
 import numpy as np
+import math
 import cv2
 from PIL import Image
 from PIL import ImageFont
@@ -71,14 +72,16 @@ def unwarp(image, pts): # format: (y,x)
     # x-coordiates or the top-right and top-left x-coordinates
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
     widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-    aveWidth  = int((widthA+widthB)//2) # max(int(widthA), int(widthB))
+    # aveWidth  = int((widthA+widthB)//2) # max(int(widthA), int(widthB))
+    aveWidth  = int(math.sqrt(widthA*widthB))
 
     # compute the height of the new image, which will be the
     # maximum distance between the top-right and bottom-right
     # y-coordinates or the top-left and bottom-left y-coordinates
     heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
     heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    aveHeight = int((heightA+heightB)//2) # max(int(heightA), int(heightB))
+    # aveHeight = int((heightA+heightB)//2) # max(int(heightA), int(heightB))
+    aveHeight = int(math.sqrt(heightA*heightB))
 
     # now that we have the dimensions of the new image, construct
     # the set of destination points to obtain a "birds eye view",
