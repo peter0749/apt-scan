@@ -33,12 +33,28 @@ def order_points(pts): # format: (x, y)
 
     # return the ordered coordinates
     return rect
+def three_pts_to_four_pts(pts): # (3, 2)
+    apts = np.append(pts[-1:], pts, axis=0) # (4, 2) 
+    bpts = np.append(pts, pts[0:1], axis=0) # (4, 2)
+    a2b = apts-bpts # (4, 2)
+    dists = np.sqrt(np.sum((a2b)**2, axis=-1)) # (4,)
+    max_dist = np.argmax(dists) 
+    a = max_dist-1
+    b = max_dist
+    mask = np.ones(3,dtype=np.bool)
+    mask[[a,b]] = False
+    c = np.squeeze(pts[mask]) # 1 point
+    a, b = pts[a], pts[b]
+    m = 0.5 * (a+b)
+    v = m - c
+    d = m + v
+    return np.array([a, c, b, d], dtype=np.float32)
 
 def robust_unwarp(image, pts):
     if len(pts)<3: # too less points
         return image # give up!
     elif len(pts)==3: # hmmmmmmmmm
-        # not implement yet
+        pts = three_pts_to_four_pts(pts)
         return unwarp(image, pts) # no problem
     else:
         return unwarp(image, pts) # no problem
@@ -91,7 +107,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     points = np.array([
                         [10, 20 ], # lu
-                        [20, 100], # ru
+                        # [20, 100], # ru
                         [100,120], # rd
                         [100, 20], # ld
                       ])
