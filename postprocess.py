@@ -10,6 +10,8 @@ def find_corner_condidate(binary_img, component_threshold=13):
     l = label(binary_img)
     p = regionprops(l, cache=True)
     num = len(p)
+    if num==0:
+        return np.array([])
     points = []
     dists = []
     for region in p:
@@ -20,6 +22,8 @@ def find_corner_condidate(binary_img, component_threshold=13):
         y, x = point
         points.append(point)
         dists.append( [area, (y-cy)**2 + (x-cx)**2] ) # (-area of reagion, distance between center of image and region center)
+    if len(points)==0:
+        return np.array([])
     dists = np.asarray(dists)
     # print(dists)
     points = np.asarray(points)

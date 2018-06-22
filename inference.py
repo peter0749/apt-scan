@@ -37,6 +37,9 @@ h, w = img.shape[:2]
 label = model.predict(img_r, batch_size=1)[0]
 
 pts = postprocess.find_corner_condidate((label>0.5).astype(np.uint8), args.component_threshold) # format: (y, x)
+if len(pts)==0:
+    imsave(args.output, img)
+    exit
 pts[...,0] = np.clip(pts[...,0] * h / oh, 0, h-1)
 pts[...,1] = np.clip(pts[...,1] * w / ow, 0, w-1)
 w = robust_unwarp(img, pts)
