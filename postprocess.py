@@ -14,13 +14,16 @@ def find_corner_condidate(binary_img):
     dists = []
     for region in p:
         point = region.centroid
+        area  = region.area
         y, x = point
         points.append(point)
-        dists.append( (y-cy)**2 + (x-cx)**2 ) # amp
+        dists.append( [area, (y-cy)**2 + (x-cx)**2] ) # (-area of reagion, distance between center of image and region center)
     dists = np.asarray(dists)
-    points= np.asarray(points)
+    # print(dists)
+    points = np.asarray(points)
     # print(points)
-    order = np.argsort(dists)
+    order = np.lexsort((-dists[...,0], dists[...,1]))
+    # print(order)
     del dists
     points = points[order][:4]
     # print(points)
@@ -31,7 +34,7 @@ def find_corner_condidate(binary_img):
     angles = np.asarray(angles)
     order = np.argsort(angles)
     del angles
-    points = points[order] # clockwise order
+    points = points[order] # clockwise order (sort by atan2)
     return points
 
 if __name__ == '__main__':
