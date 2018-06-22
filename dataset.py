@@ -119,7 +119,7 @@ class APTDataset(Sequence):
             corners[:, 1] *= fy
             
             if self.is_training and np.random.rand() < .3:
-                angle = np.random.uniform(-15,15)
+                angle = np.random.uniform(-30,30)
                 cx = int(img.shape[1]//2)
                 cy = int(img.shape[0]//2)
                 
@@ -137,7 +137,7 @@ class APTDataset(Sequence):
                 M[0, 2] += (nW / 2) - cx
                 M[1, 2] += (nH / 2) - cy
                 
-                img = np.clip(cv2.warpAffine(img,M,(nW, nH), flags=cv2.INTER_CUBIC), 0, 255)
+                img = np.clip(cv2.warpAffine(img,M,(nW, nH), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=np.random.randint(25)), 0, 255)
                 
                 x_scale = self.input_shape[1] / nW
                 y_scale = self.input_shape[0] / nH
@@ -164,7 +164,7 @@ class APTDataset(Sequence):
                 lab[rr, cc, 0] = 1 # markers
             
             if self.is_training:
-                if np.random.rand() < 0.1: # heavy augmentation (slow)
+                if np.random.rand() < 0.3: # heavy augmentation (slow)
                     img = self.seq.augment_image(img) # data augmentation
                 else: # light augmentation (fast)
                     img = img.astype(np.float32) / 255.0 # normalize first
