@@ -8,3 +8,4 @@
 ![c](assets/IMG_0780.JPG)
 ![c_w](assets/c_unwarpped.png)
 
+![loss](assets/tensorboard.PNG)
