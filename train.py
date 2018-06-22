@@ -16,6 +16,8 @@ parser.add_argument('--epochs', type=int, default=1000, required=False,
                     help='epochs')
 parser.add_argument('--lr', type=float, default=0.001, required=False,
                     help='learning rate')
+parser.add_argument('--early_stop', type=int, default=5, required=False,
+                    help='early_stopping')
 parser.add_argument('--loss_type', type=str, default='bce_dice', required=False,
                     help='bce_dice / focal_loss / bce / mse [default: bce_dice]')
 parser.add_argument('--focal_loss_gamma', type=float, default=2.0, required=False,
@@ -40,7 +42,7 @@ keras.backend.set_session(session)
 from model import mean_iou, bce_dice_coef, model
 from dataset import APTDataset
 from callbacks import Preview
-from keras.callbacks import ModelCheckpoint, TensorBoard
+from keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from keras.optimizers import Adam
 from focal_loss import focal_loss
 
@@ -64,5 +66,5 @@ ckpt = ModelCheckpoint('best.h5', save_best_only=True)
 train_generator = APTDataset(args.train, (args.height, args.width, 3), (args.height//2, args.width//2, 1), batch_size=args.batch_size, is_training=True)
 valid_generator = APTDataset(args.valid, (args.height, args.width, 3), (args.height//2, args.width//2, 1), batch_size=args.batch_size, is_training=False)
 
-ae.fit_generator(train_generator, epochs=args.epochs, validation_data=valid_generator, shuffle=True, workers=args.cpu_workers, max_queue_size=args.queue_length, callbacks=[TensorBoard(), ckpt, Preview('preview', valid_generator, ae)])
+ae.fit_generator(train_generator, epochs=args.epochs, validation_data=valid_generator, shuffle=True, workers=args.cpu_workers, max_queue_size=args.queue_length, callbacks=[EarlyStopping(monitor='val_loss', min_delta=0.001, patience=args.early_stop, mode='min', verbose=1), TensorBoard(), ckpt, Preview('preview', valid_generator, ae)])
 ae.save('ae.h5')
