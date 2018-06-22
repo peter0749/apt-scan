@@ -3,7 +3,7 @@ import math
 from skimage.measure import regionprops
 from skimage.measure import label
 
-def find_corner_condidate(binary_img):
+def find_corner_condidate(binary_img, component_threshold=13):
     h, w = binary_img.shape[:2]
     cx = w // 2
     cy = h // 2
@@ -15,6 +15,8 @@ def find_corner_condidate(binary_img):
     for region in p:
         point = region.centroid
         area  = region.area
+        if area < component_threshold:
+            continue
         y, x = point
         points.append(point)
         dists.append( [area, (y-cy)**2 + (x-cx)**2] ) # (-area of reagion, distance between center of image and region center)
