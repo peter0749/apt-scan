@@ -22,7 +22,7 @@ parser.add_argument('--loss_type', type=str, default='bce_dice', required=False,
                     help='bce_dice / focal_loss / bce / mse [default: bce_dice]')
 parser.add_argument('--focal_loss_gamma', type=float, default=2.0, required=False,
                     help='focal_loss_gamma [default: 2.0]')
-parser.add_argument('--focal_loss_alpha', type=float, default=0.5, required=False,
+parser.add_argument('--focal_loss_alpha', type=float, default=0.3, required=False,
                     help='focal_loss_alpha [default: 0.2]')
 parser.add_argument('--cpu_workers', type=int, default=5, required=False,
                     help='use how many process to load data?')
