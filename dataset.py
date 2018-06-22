@@ -17,6 +17,9 @@ from skimage.draw import circle
 from skimage.transform import rotate, resize
 import copy
 
+R_t = lambda theta: np.array([[math.cos(theta), -math.sin(theta)],
+                              [math.sin(theta),  math.cos(theta)]], dtype=np.float32)
+
 class APTDataset(Sequence):
     def __init__(self, prefix, input_shape, output_shape, batch_size=8, c_r=3.2, is_training=False):
         super().__init__()
@@ -92,7 +95,73 @@ class APTDataset(Sequence):
             srcW, srcH = img.size
             dstW, dstH = self.output_shape[:2]
             img = np.array(img, dtype=np.uint8)
+            
+            crop_ratio = np.zeros(4, dtype=np.float32)
+            
+            if self.is_training and np.random.rand() < 0.3:
+                crop_ratio = np.random.uniform(0.01, 0.1, size=4)
+                u, r, d, l = np.round(crop_ratio * np.array([srcH, srcW, srcH, srcW])).astype(np.uint8)
+                img = img[u:srcH-d,l:srcW-r] # crop image
+            fx = self.input_shape[1] / float(img.shape[1])
+            fy = self.input_shape[0] / float(img.shape[0])
+            
             img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first... 
+
+            # Sort the corners by clockwise
+            # while the first corner is the most top-lefted
+            corners = np.float32(data['shapes'][0]['points'])
+            
+            if self.is_training and np.sum(crop_ratio)>0:
+                corners[:, 0] -= l 
+                corners[:, 1] -= u 
+            
+            corners[:, 0] *= fx
+            corners[:, 1] *= fy
+            
+            if self.is_training and np.random.rand() < .3:
+                angle = np.random.uniform(-15,15)
+                cx = int(img.shape[1]//2)
+                cy = int(img.shape[0]//2)
+                
+                M = cv2.getRotationMatrix2D((cx,cy),angle,1)
+                
+                cos = np.abs(M[0, 0])
+                sin = np.abs(M[0, 1])
+ 
+                (h, w) = img.shape[:2]
+                # compute the new bounding dimensions of the image
+                nW = int((h * sin) + (w * cos))
+                nH = int((h * cos) + (w * sin))
+ 
+                # adjust the rotation matrix to take into account translation
+                M[0, 2] += (nW / 2) - cx
+                M[1, 2] += (nH / 2) - cy
+                
+                img = np.clip(cv2.warpAffine(img,M,(nW, nH), flags=cv2.INTER_CUBIC), 0, 255)
+                
+                x_scale = self.input_shape[1] / nW
+                y_scale = self.input_shape[0] / nH
+                
+                if img.shape != self.input_shape:
+                    img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first... 
+                    # img = resize(img, self.input_shape[:2],  mode='constant', cval=0, clip=True, preserve_range=True, order=0)
+                
+                R = R_t(-angle*np.pi/180.0)
+                corners[:, 0] -= cx
+                corners[:, 1] -= cy
+                corners = (R @ corners.T).T
+                corners[:, 0] *= x_scale
+                corners[:, 1] *= y_scale
+                corners[:, 0] += cx
+                corners[:, 1] += cy
+            
+            corners[:, 0] = np.round(np.clip(corners[:, 0] * dstW/self.input_shape[1], 0, dstW-1))
+            corners[:, 1] = np.round(np.clip(corners[:, 1] * dstH/self.input_shape[0], 0, dstH-1))
+            corners = corners.astype(np.uint8)
+            lab = np.zeros(self.output_shape, dtype=np.float32)
+            for (x, y) in corners:
+                rr, cc = circle(y, x, self.c_r, shape=self.output_shape[:2])
+                lab[rr, cc, 0] = 1 # markers
             
             if self.is_training:
                 if np.random.rand() < 0.1: # heavy augmentation (slow)
@@ -120,55 +189,28 @@ class APTDataset(Sequence):
                         ksize = np.random.choice([3,5,7])
                         img = cv2.GaussianBlur(img, (ksize,ksize), 0)
             
-            img = img.astype(np.float32) / 255.0 # normalize
-
-            # Sort the corners by clockwise
-            # while the first corner is the most top-lefted
-            corners = np.float32(data['shapes'][0]['points'])
-            corners[:, 0] = np.round(corners[:, 0] / srcW * dstW)  # x
-            corners[:, 1] = np.round(corners[:, 1] / srcH * dstH)  # y
-            
-            lab = np.zeros(self.output_shape, dtype=np.float32)
-            for (x, y) in corners:
-                rr, cc = circle(y, x, self.c_r, shape=self.output_shape[:2])
-                lab[rr, cc, 0] = 1 # markers
-            
+            img = np.clip(img.astype(np.float32) / 255.0, 0, 1) # normalize
             if self.is_training:
-                
                 if np.random.rand() < .3: # flip vertical
                     img = np.flip(img, 0)
                     lab = np.flip(lab, 0)
                 if np.random.rand() < .5: # flip horizontal
                     img = np.flip(img, 1)
                     lab = np.flip(lab, 1)
-                if np.random.rand() < .3: # rotate
-                    angle = np.random.uniform(-30,30)
-                    img = rotate(img, angle, resize=True)
-                    lab = rotate(lab, angle, resize=True)
-                    if img.shape != self.input_shape:
-                        od = np.random.randint(2) # 0 / 1
-                        img = resize(img, self.input_shape[:2],  mode='constant', cval=0, clip=True, preserve_range=True, order=od)
-                        lab = resize(lab, self.output_shape[:2], mode='constant', cval=0, clip=True, preserve_range=True, order=od)
-                '''
-                # random amplify each channel
-                a = .1 # amptitude
-                t  = [np.random.uniform(-a,a)]
-                t += [np.random.uniform(-a,a)]
-                t += [np.random.uniform(-a,a)]
-                t = np.array(t)
-
-                img = np.clip(img * (1. + t), 0, 1) # channel wise amplify
-                up = np.random.uniform(0.95, 1.05) # change gamma
-                img = np.clip(img**up, 0, 1) # apply gamma and convert back to range [0,255]
-                '''
             dat_que[n] = img
             lab_que[n] = lab
         return dat_que, (lab_que>.5).astype(np.uint8)
 
 if __name__ == '__main__':
-    data_generator = APTDataset('dataset', (224,224,3), (112,112,1), batch_size=4, is_training=True)
+    data_generator = APTDataset('dataset\\valid', (224,224,3), (112,112,1), batch_size=4, is_training=True)
     batch = data_generator.__getitem__(0)
-    plt.imshow(np.squeeze(np.round(batch[0][0]*255).astype(np.uint8)))
+    img = np.round(np.clip(batch[0][0]*255, 0, 255)).astype(np.uint8)
+    lab = np.squeeze(batch[1][0]).astype(np.bool)
+    img = resize(img, (112,112))
+    plt.imshow(img)
     plt.show()
-    plt.imshow(np.squeeze(np.round(batch[1][0])))
+    plt.imshow(lab)
+    plt.show()
+    img[lab] = 255, 0, 0
+    plt.imshow(img)
     plt.show()
