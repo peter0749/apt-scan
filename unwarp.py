@@ -93,7 +93,7 @@ def unwarp(image, pts): # format: (y,x)
 
     # compute the perspective transform matrix and then apply it
     M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (aveWidth, aveHeight))
+    warped = cv2.warpPerspective(image, M, (aveWidth, aveHeight), flags=cv2.INTER_AREA)
     
     # M = cv2.getAffineTransform(rect[:3], dst[:3])
     # warped = cv2.warpAffine(image, M, (aveWidth, aveHeight))
