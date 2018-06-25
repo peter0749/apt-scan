@@ -8,7 +8,7 @@
 
 ![model](assets/network_layout.PNG)
 
-### Wrapping:
+### Warpping:
 
 ![real_life](assets/real_life.jpg)
 ![real_life_unwarp](assets/real_life_unwarpped.png)
