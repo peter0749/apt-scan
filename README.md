@@ -1,8 +1,12 @@
 # apt-scan
 
-### Training:
+### Find corners:
 
 ![hello](assets/epoch_78_7.jpg)
+
+### Model layout:
+
+![model](assets/network_layout.PNG)
 
 ### Wrapping:
 
