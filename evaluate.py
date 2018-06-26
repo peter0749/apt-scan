@@ -65,6 +65,6 @@ for path in tqdm(test_data_paths, total=len(test_data_paths)):
 
 mean_sse_error /= float(len(test_data_paths))
 fail_r = fails / float(len(test_data_paths))
-print('SSE: ', mean_sse_error)
-print('mean SSE: ', mean_sse_error.mean())
+print('MSE: ', mean_sse_error)
+print('mean MSE: ', mean_sse_error.mean())
 print('failure rate: {:.6f}'.format(fail_r))
