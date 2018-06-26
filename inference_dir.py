@@ -39,7 +39,7 @@ paths = [*glob.glob(args.input + '/*.jpg'), *glob.glob(args.input + '/*.png')]
 for fullpath in tqdm(paths, total=len(paths), ascii=True):
     filename = os.path.split(fullpath)[-1]
     img = imread(fullpath)
-    img = gray2rgb(img)
+    img = gray2rgb(img)[...,:3]
     img_r = resize(img, (ih, iw), preserve_range=True).astype(np.float32)[np.newaxis,...] / 255.0
     h, w = img.shape[:2]
 
