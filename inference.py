@@ -30,7 +30,7 @@ ih, iw = model.input_shape[1:3]
 oh, ow = model.output_shape[1:3]
 
 img = imread(args.image)
-img = gray2rgb(img)
+img = gray2rgb(img)[...,:3]
 img_r = resize(img, (ih, iw), preserve_range=True).astype(np.float32)[np.newaxis,...] / 255.0
 h, w = img.shape[:2]
 
