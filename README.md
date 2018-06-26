@@ -30,7 +30,7 @@ Use same parameters in [demo site](https://github.com/peter0749/apt-scan-demo/bl
 
 ##### failure rate: \#failure / \#total
 
-|            | *TL*     | *TR*     | *DR*     | *DL*     | *mean MSE* | *failure rate* |
+|            | **TL**     | **TR**     | **DR**     | **DL**     | **mean MSE** | **failure rate** |
 |------------|--------|--------|--------|--------|----------|--------------|
-| *Training*   | 0.0121 | 0.0237 | 0.0159 | 0.0275 | 0.0198   | 0.0405       |
-| *Validation* | 0.0297 | 0.0353 | 0.0184 | 0.0567 | 0.0350   | 0.0800       |
+| **Training**   | 0.0121 | 0.0237 | 0.0159 | 0.0275 | 0.0198   | 0.0405       |
+| **Validation** | 0.0297 | 0.0353 | 0.0184 | 0.0567 | 0.0350   | 0.0800       |
