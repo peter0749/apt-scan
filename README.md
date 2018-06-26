@@ -24,7 +24,7 @@
 
 Use same parameters in [demo site](https://github.com/peter0749/apt-scan-demo/blob/master/demo/unwrap/models.py)
 
-##### MSE (corner wise): up-left, up-right, down-right, down-left
+##### MSE (corner wise): top-left, top-right, down-right, down-left
 
 ##### mean MSE: mean value of MSE
 
