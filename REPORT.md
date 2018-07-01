@@ -136,7 +136,7 @@ $TL, TR, BR, BL$ 分別代表左上、右上、右下、左下 corner
 
 找出 corner 後，我們需要找出原圖片與轉正後圖片座標之間的關係。電腦視覺告訴我們，事實上他們座標只差一個 Homography Transform（Projection Transform, Perspective Transform）。而這個 Transform 在**齊次座標系**下是一個線性變換。因些針對原圖上的某一點座標 $(src_x, src_y)$ 與轉正後圖片上的對應座標 $(dst_x, dst_y)$，以下式子恆成立：
 
-![](https://i.imgur.com/kaTvAXu.png =400x100)
+![](https://i.imgur.com/kaTvAXu.png)
 
 我們的目標是求出 Homograph Matrix $H$，如果求出來後，我們就可以用這個式子去做 Warping。
 
