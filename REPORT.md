@@ -4,8 +4,6 @@
 403410071 資工四 李晨維
 404410030 資工三 鄭光宇
 
-[TOC]
-
 # Abstract
 
 我們打造了一個功能相同於 Office Lens 的系統。這個系統的輸入為一張關於紙張、書本或海報的照片，系統會自動偵測照片中的目標，將之轉正然後輸出。我們嘗試了幾種不同的 CNN，其中最好的在我們自己收集的 Dataset 上做出了 92% 的 Accuracy 且預測的 corner 與實際 corner 的距離平均只有 0.003 倍的圖片長。
@@ -49,11 +47,11 @@
 
 Dice Coefficient:
 
-![](https://i.imgur.com/g6S2IMY.png =180x80)
+![](https://i.imgur.com/g6S2IMY.png)
 
 Binary Cross-Entropy:
 
-![](https://i.imgur.com/Jr4GK41.png =500x80)
+![](https://i.imgur.com/Jr4GK41.png)
 
 我們的 Loss 為
 
@@ -86,10 +84,10 @@ $$
 
 我們也嘗試將 Corners Detection 視為 Pose Estimation，並使用 Pose Estimation 的方法來解決：維度為 `(3, 256, 256)` 的圖片通過 model 後，生出 4 個大小為 `(128, 128)` 的 heatmap，分別對應 4 個 corners。Model 我們使用 pretrained 在 ImageNet 上 ResNet50，並把 ResNet50 的 FC 換成了 2 個 Deconvolution。Heatmaps 的 ground truth 為高斯分佈，即在對應的 corner 的正確位置會有一個 `sigma=[3, 3]` 的 2D Gaussian Distribution。訓練時我們使用 `Adam(lr=0.001)` 與一些的 data augmentation。而 Loss 使用帶權的 MSE，corner 附近的矩形有著比較大的權重。
 
-![](https://i.imgur.com/T2z5eYp.png =350x200)
+![](https://i.imgur.com/T2z5eYp.png)
 Model 架構圖
 
-![](https://i.imgur.com/xgb3sLJ.jpg =600x200)
+![](https://i.imgur.com/xgb3sLJ.jpg)
 範例。左圖是 input，右邊上排四個是 ground truth heatmap，而下排四個是預測結果。
 
 最後的座標使用 `skimage.feature.peak_loca_max` 從 heatmap 中抽出，若有多個 local max 時，選取抽取出來的第一個。
