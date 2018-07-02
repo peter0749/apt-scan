@@ -24,7 +24,7 @@
 
 ### Evaluation (lower is better):
 
-Use same parameters in [demo site](https://github.com/peter0749/apt-scan-demo/blob/master/demo/unwrap/models.py)
+Use same parameters in [demo site](http://aptscan.csie.io:8000/upload/)
 
 ##### MSE (corner wise): top-left, top-right, down-right, down-left
 
