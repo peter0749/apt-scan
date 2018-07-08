@@ -169,18 +169,18 @@ class APTDataset(Sequence):
                 else: # light augmentation (fast)
                     img = img.astype(np.float32) / 255.0 # normalize first
                     # random amplify each channel
-                    a = .1 # amptitude
+                    a = .2 # amptitude
                     t  = [np.random.uniform(-a,a)]
                     t += [np.random.uniform(-a,a)]
                     t += [np.random.uniform(-a,a)]
                     t = np.array(t)
 
                     img = np.clip(img * (1. + t), 0, 1) # channel wise amplify
-                    up = np.random.uniform(0.95, 1.05) # change gamma
+                    up = np.random.uniform(0.8, 1.2) # change gamma
                     img = np.clip(img**up, 0, 1) # apply gamma and convert back to range [0,255]    
                     
                     # additive random noise
-                    sigma = np.random.rand()*0.04
+                    sigma = np.random.rand()*0.05
                     img = np.clip(img + np.random.randn(*img.shape)*sigma, 0, 1)
                     
                     img = np.round(np.clip(img*255, 0, 255)).astype(np.uint8)
