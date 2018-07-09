@@ -1,7 +1,5 @@
 # apt-scan
 
-[Demo site](http://aptscan.csie.io:8000/upload/)
-
 ### Find corners:
 
 ![hello](assets/epoch_78_7.jpg)
@@ -23,8 +21,6 @@
 ![loss](assets/tensorboard.PNG)
 
 ### Evaluation (lower is better):
-
-Use same parameters in [demo site](http://aptscan.csie.io:8000/upload/)
 
 ##### MSE (corner wise): top-left, top-right, down-right, down-left
 
