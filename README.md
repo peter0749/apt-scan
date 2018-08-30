@@ -1,9 +1,5 @@
 # apt-scan
 
-### Model
-
-![](assets/model.png)
-
 ### Find corners:
 
 ![hello](assets/epoch_78_7.jpg)
@@ -36,3 +32,6 @@
 | **Training**   | 0.00371909 | 0.00315485 | 0.00276901 | 0.00619295 | 0.0039589726 | 0.005525 |
 | **Validation** | 0.00353955 | 0.00050486 | 0.00318895 | 0.00579515 | 0.003257126 | 0 |
 
+### Model
+
+![](assets/model.png)
