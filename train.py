@@ -28,6 +28,8 @@ parser.add_argument('--cpu_workers', type=int, default=5, required=False,
                     help='use how many process to load data?')
 parser.add_argument('--queue_length', type=int, default=20, required=False,
                     help='data generator queue size')
+parser.add_argument('--use_xla', action='store_true', default=False,
+                    help='')
 args = parser.parse_args()
 
 print('Input size: {:d}x{:d}'.format(args.height, args.width))
@@ -36,6 +38,8 @@ print('Learning rate: {:.6f}'.format(args.lr))
 import tensorflow as tf
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
+if args.use_xla:
+    config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
 session = tf.Session(config=config)
 import keras
 keras.backend.set_session(session)
@@ -66,5 +70,5 @@ ckpt = ModelCheckpoint('best.h5', save_best_only=True)
 train_generator = APTDataset(args.train, (args.height, args.width, 3), (args.height//2, args.width//2, 1), batch_size=args.batch_size, is_training=True)
 valid_generator = APTDataset(args.valid, (args.height, args.width, 3), (args.height//2, args.width//2, 1), batch_size=args.batch_size, is_training=False)
 
-ae.fit_generator(train_generator, epochs=args.epochs, validation_data=valid_generator, shuffle=True, workers=args.cpu_workers, max_queue_size=args.queue_length, callbacks=[EarlyStopping(monitor='val_loss', min_delta=0.001, patience=args.early_stop, mode='min', verbose=1), TensorBoard(), ckpt, Preview('preview', valid_generator, ae)])
+ae.fit_generator(train_generator, epochs=args.epochs, validation_data=valid_generator, shuffle=True, workers=args.cpu_workers, max_queue_size=args.queue_length, callbacks=[EarlyStopping(monitor='val_loss', min_delta=0.001, patience=args.early_stop, mode='min', verbose=1), TensorBoard(), ckpt, Preview('/tmp/training_preview', valid_generator, ae)], use_multiprocessing=True)
 ae.save('ae.h5')

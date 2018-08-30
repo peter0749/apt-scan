@@ -84,68 +84,68 @@ class APTDataset(Sequence):
             l_bound = r_bound - self.batch_size
         dat_que = np.empty((self.batch_size, *self.input_shape),  dtype=np.float32)
         lab_que = np.empty((self.batch_size, *self.output_shape), dtype=np.float32)
-        
+
         for n, index in enumerate(range(l_bound, r_bound)):
             with open(self.json_files[index]) as f:
                 data = json.load(f)
-            
+
             # Decode image from base64 imageData
             img = Image.open(BytesIO(base64.b64decode(data['imageData'])))
             img = img.convert('RGB')
             srcW, srcH = img.size
             dstW, dstH = self.output_shape[:2]
             img = np.array(img, dtype=np.uint8)
-            
+
             crop_ratio = np.zeros(4, dtype=np.float32)
-            
+
             if self.is_training and np.random.rand() < 0.3:
                 crop_ratio = np.random.uniform(0.01, 0.1, size=4)
                 u, r, d, l = np.round(crop_ratio * np.array([srcH, srcW, srcH, srcW])).astype(np.uint8)
                 img = img[u:srcH-d,l:srcW-r] # crop image
             fx = self.input_shape[1] / float(img.shape[1])
             fy = self.input_shape[0] / float(img.shape[0])
-            
-            img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first... 
+
+            img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first...
 
             # Sort the corners by clockwise
             # while the first corner is the most top-lefted
             corners = np.float32(data['shapes'][0]['points'])
-            
+
             if self.is_training and np.sum(crop_ratio)>0:
-                corners[:, 0] -= l 
-                corners[:, 1] -= u 
-            
+                corners[:, 0] -= l
+                corners[:, 1] -= u
+
             corners[:, 0] *= fx
             corners[:, 1] *= fy
-            
+
             if self.is_training and np.random.rand() < .3:
                 angle = np.random.uniform(-30,30)
                 cx = int(img.shape[1]//2)
                 cy = int(img.shape[0]//2)
-                
+
                 M = cv2.getRotationMatrix2D((cx,cy),angle,1)
-                
+
                 cos = np.abs(M[0, 0])
                 sin = np.abs(M[0, 1])
- 
+
                 (h, w) = img.shape[:2]
                 # compute the new bounding dimensions of the image
                 nW = int((h * sin) + (w * cos))
                 nH = int((h * cos) + (w * sin))
- 
+
                 # adjust the rotation matrix to take into account translation
                 M[0, 2] += (nW / 2) - cx
                 M[1, 2] += (nH / 2) - cy
-                
+
                 img = np.clip(cv2.warpAffine(img,M,(nW, nH), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=np.random.randint(25)), 0, 255)
-                
+
                 x_scale = self.input_shape[1] / nW
                 y_scale = self.input_shape[0] / nH
-                
+
                 if img.shape != self.input_shape:
-                    img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first... 
+                    img = cv2.resize(img, self.input_shape[:2][::-1], interpolation=cv2.INTER_AREA) # resize first...
                     # img = resize(img, self.input_shape[:2],  mode='constant', cval=0, clip=True, preserve_range=True, order=0)
-                
+
                 R = R_t(-angle*np.pi/180.0)
                 corners[:, 0] -= cx
                 corners[:, 1] -= cy
@@ -154,7 +154,7 @@ class APTDataset(Sequence):
                 corners[:, 1] *= y_scale
                 corners[:, 0] += cx
                 corners[:, 1] += cy
-            
+
             corners[:, 0] = np.round(np.clip(corners[:, 0] * dstW/self.input_shape[1], 0, dstW-1))
             corners[:, 1] = np.round(np.clip(corners[:, 1] * dstH/self.input_shape[0], 0, dstH-1))
             corners = corners.astype(np.uint8)
@@ -162,7 +162,7 @@ class APTDataset(Sequence):
             for (x, y) in corners:
                 rr, cc = circle(y, x, self.c_r, shape=self.output_shape[:2])
                 lab[rr, cc, 0] = 1 # markers
-            
+
             if self.is_training:
                 if np.random.rand() < 0.3: # heavy augmentation (slow)
                     img = self.seq.augment_image(img) # data augmentation
@@ -177,18 +177,20 @@ class APTDataset(Sequence):
 
                     img = np.clip(img * (1. + t), 0, 1) # channel wise amplify
                     up = np.random.uniform(0.8, 1.2) # change gamma
-                    img = np.clip(img**up, 0, 1) # apply gamma and convert back to range [0,255]    
-                    
+                    img = np.clip(img**up, 0, 1) # apply gamma and convert back to range [0,255]
+
                     # additive random noise
                     sigma = np.random.rand()*0.05
                     img = np.clip(img + np.random.randn(*img.shape)*sigma, 0, 1)
-                    
+
                     img = np.round(np.clip(img*255, 0, 255)).astype(np.uint8)
-                                        
+
                     if np.random.binomial(1, .05):
                         ksize = np.random.choice([3,5,7])
                         img = cv2.GaussianBlur(img, (ksize,ksize), 0)
-            
+                if np.random.rand() < 0.1: # permutate channels
+                    img = img[...,np.random.permutation(3)]
+
             img = np.clip(img.astype(np.float32) / 255.0, 0, 1) # normalize
             if self.is_training:
                 if np.random.rand() < .3: # flip vertical

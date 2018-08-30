@@ -4,10 +4,6 @@
 
 ![hello](assets/epoch_78_7.jpg)
 
-### Model layout:
-
-![model](assets/network_layout.PNG)
-
 ### Warpping:
 
 ![real_life](assets/real_life.jpg)
@@ -18,7 +14,10 @@
 
 ### Loss:
 
-![loss](assets/tensorboard.PNG)
+![](assets/loss.png)
+![](assets/valloss.png)
+![](assets/meaniou.png)
+![](assets/valmeaniou.png)
 
 ### Evaluation (lower is better):
 
@@ -30,5 +29,6 @@
 
 |            | **TL**     | **TR**     | **DR**     | **DL**     | **mean MSE** | **failure rate** |
 |------------|--------|--------|--------|--------|----------|--------------|
-| **Training**   | 0.0075 | 0.0109 | 0.0122 | 0.0174 | 0.0120   | 0.0258       |
-| **Validation** | 0.0105 | 0.0328 | 0.0136 | 0.0205 | 0.0194   | 0.0400       |
+| **Training**   | 0.00371909 | 0.00315485 | 0.00276901 | 0.00619295 | 0.0039589726 | 0.005525 |
+| **Validation** | 0.00353955 | 0.00050486 | 0.00318895 | 0.00579515 | 0.003257126 | 0 |
+

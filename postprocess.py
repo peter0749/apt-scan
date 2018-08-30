@@ -28,7 +28,7 @@ def find_corner_condidate(binary_img, component_threshold=13):
     # print(dists)
     points = np.asarray(points)
     # print(points)
-    order = np.lexsort((-dists[...,0], dists[...,1]))
+    order = np.lexsort((dists[...,1], -dists[...,0]))
     # print(order)
     del dists
     points = points[order][:4]
