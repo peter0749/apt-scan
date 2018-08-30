@@ -1,5 +1,9 @@
 # apt-scan
 
+### Model
+
+![](assets/model.png)
+
 ### Find corners:
 
 ![hello](assets/epoch_78_7.jpg)
