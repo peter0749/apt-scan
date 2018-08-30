@@ -70,5 +70,5 @@ ckpt = ModelCheckpoint('best.h5', save_best_only=True)
 train_generator = APTDataset(args.train, (args.height, args.width, 3), (args.height//2, args.width//2, 1), batch_size=args.batch_size, is_training=True)
 valid_generator = APTDataset(args.valid, (args.height, args.width, 3), (args.height//2, args.width//2, 1), batch_size=args.batch_size, is_training=False)
 
-ae.fit_generator(train_generator, epochs=args.epochs, validation_data=valid_generator, shuffle=True, workers=args.cpu_workers, max_queue_size=args.queue_length, callbacks=[EarlyStopping(monitor='val_loss', min_delta=0.001, patience=args.early_stop, mode='min', verbose=1), TensorBoard(), ckpt, Preview('/tmp/training_preview', valid_generator, ae)], use_multiprocessing=True)
+ae.fit_generator(train_generator, epochs=args.epochs, validation_data=valid_generator, shuffle=True, workers=args.cpu_workers, max_queue_size=args.queue_length, callbacks=[EarlyStopping(monitor='val_loss', min_delta=0.001, patience=args.early_stop, mode='min', verbose=1), TensorBoard(), ckpt, Preview('./preview', valid_generator, ae)])
 ae.save('ae.h5')
